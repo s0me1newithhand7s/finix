@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>finix</title>
+     
+    
+    <script>
+      document.documentElement.classList.remove("no-js");
+      document.documentElement.classList.add("js");
+      // Apply sidebar state immediately to prevent flash
+      (function () {
+        try {
+          if (localStorage.getItem("sidebar-collapsed") === "true") {
+            document.documentElement.classList.add("sidebar-collapsed");
+          }
+        } catch (e) {
+          // localStorage unavailable
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="assets/style.css" />
+    <script defer src="assets/main.js"></script>
+    
+    <script>
+      window.searchNamespace = window.searchNamespace || {};
+      window.searchNamespace.rootPath = "";
+    </script>
+    <script defer src="assets/search.js"></script>
+    
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-left">
+          <h1 class="site-title">
+            <a href="index.html">finix</a>
+          </h1>
+
+          <nav class="header-nav">
+  <ul>
+    <li >
+      <a href="options.html">Options</a>
+    </li>
+    
+    <li><a href="search.html">Search</a></li>
+    
+  </ul>
+</nav>
+
+        </div>
+        
+        <div class="search-container js-only">
+          <input type="text" id="search-input" placeholder="Search..." />
+          <div id="search-results" class="search-results"></div>
+        </div>
+        
+      </header>
+
+      <div class="layout">
+        <div class="sidebar-toggle js-only" aria-label="Toggle sidebar">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="24"
+            height="24"
+          >
+            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path>
+          </svg>
+        </div>
+        <nav class="sidebar">
+          <details class="sidebar-section" data-section="docs" open>
+            <summary>Documents</summary>
+            <div class="sidebar-section-content">
+              <ul>
+                <li><a href="index.html">finix</a></li>
+<li><a href="search.html">Search</a></li>
+
+              </ul>
+            </div>
+          </details>
+
+          <details class="sidebar-section" data-section="toc" open>
+            <summary>Contents</summary>
+            <div class="sidebar-section-content">
+              <ul class="toc-list">
+                <li><a href="#finix">finix</a>
+<ul><li><a href="#installation">Installation</a>
+</ul><li><a href="#see-also">See also</a>
+</li>
+              </ul>
+            </div>
+          </details>
+        </nav>
+
+        <main class="content"><html><head></head><body><h1 id="finix"><code>finix</code></h1>
+<p><code>finix</code> is an experimental GNU/Linux distribution built around the <code>nix</code> package manager. It uses <a href="https://github.com/finit-project/finit">finit</a> instead of <code>systemd</code> as its init system and service supervisor. By default, it seeks to be:</p>
+<ul>
+<li>minimal</li>
+<li>unopinionated</li>
+<li><em>extremely</em> flexible</li>
+</ul>
+<p><code>finix</code> is fully capable as a:</p>
+<ul>
+<li>daily-drivable desktop/laptop</li>
+<li>homelab server</li>
+<li>media center</li>
+<li>gaming pc</li>
+<li>... and more!</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p><code>finix</code> does not yet have a disk image available to download - installation will need to take place from a standard NixOS image, which can be downloaded <a href="https://nixos.org/download#nixos-iso">here</a>. You may download and burn either the minimal image or the graphical image and the steps will remain the same.</p>
+<p>For an installation guide, please see one of the following repositories on Codeberg. Credits to <a href="https://github.com/xZecora">@xZecora</a> for writing these.</p>
+<ul>
+<li><a href="https://codeberg.org/vitrial/finix-config">flake-based setup</a></li>
+<li><a href="https://codeberg.org/vitrial/finix-channel-install">channel-based setup</a></li>
+</ul>
+<h1 id="see-also">See also</h1>
+<ul>
+<li><a href="https://finix-community.github.io/finix/options.html">finix options search</a></li>
+<li><a href="https://finit-project.github.io/">finit project</a></li>
+<li><a href="https://github.com/finix-community/profiles">finix profiles</a></li>
+<li><a href="https://github.com/finix-community/community-modules/">finix community modules</a></li>
+</ul>
+</body></html></main>
+      </div>
+
+      <aside class="page-toc">
+        <nav class="page-toc-nav">
+          <h3>On this page</h3>
+          <ul class="page-toc-list">
+            <li><a href="#finix">finix</a>
+<ul><li><a href="#installation">Installation</a>
+</ul><li><a href="#see-also">See also</a>
+</li>
+          </ul>
+        </nav>
+      </aside>
+
+      <footer>
+  <p>Generated with ndg</p>
+</footer>
+
+    </div>
+
+    
+  </body>
+</html>
