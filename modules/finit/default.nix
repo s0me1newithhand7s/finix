@@ -493,6 +493,99 @@ let
             - `script` - similarly, but instead of rebooting, call the `post:script` action if set.
           '';
         };
+
+        sandbox = lib.mkOption {
+          description = ''
+            Sandboxing option for services; optional.
+            Uses bwrap, landlock, could be expanded.
+          '';
+          default = {};
+          type = lib.types.submodule {
+            enable = lib.mkEnableOption "Enable sandboxing.";
+
+            provider = lib.mkOption {
+              type = lib.types.nullOr lib.types.enum [
+                "bwrap"
+                "lsm"
+              ];
+              default = null;
+              description = ''
+                Option fo respected sandboxing provider.
+                - Bubblewrap widely used in flatpak; (bwrap)
+                - Landlock is kernel-driven security module; (lsm)
+              '';
+            };
+
+            flags = lib.mkOption {
+              default = null;
+              type = lib.types.nullOr lib.types.listOf lib.types.str;
+            };
+
+            mode = lib.mkOption {
+              default = {};
+              type = lib.types.submodule {
+                unshare = lib.mkOption {
+                  default = {};
+                  type = lib.types.submodule {
+                    options = {
+                      all = lib.mkEnableOption;
+                      cgroups = lib.mkEnableOption;
+                      ipc = lib.mkEnableOption;
+                      net = lib.mkEnableOption;
+                      pid = lib.mkEnableOption;
+                      user = lib.mkEnableOption;
+                      uts= lib.mkEnableOption;
+                    };
+                  };
+                };
+
+                process = lib.mkOption {
+                  default = {};
+                  type = lib.types.submodule {
+                    options = {
+                      asPID1 = lib.mkEnableOption;
+                      newSession = lib.mkEnableOption;
+                      noUsernsRestrictions = lib.mkEnableOption;
+                    };
+                  };
+                };
+
+                fileSystem = lib.mkOption {
+                  default = {};
+                  type = lib.types.submodule {
+                    options = {
+                      RORoot = lib.mkEnableOption;
+                      privateTemp = lib.mkEnableOption;
+                      privateHome = lib.mkEnableOption;
+                      privateDev = lib.mkEnableOption;
+                      protectKernelTunables = lib.mkEnableOption;
+                      
+                      usernsMode = lib.mkOption {
+                        default = null;
+                        type = lib.types.nullOr lib.types.enum [
+                          "supported"
+                          "disabled"
+                        ];
+
+                        tryBinds = lib.mkOption {
+                          default = {};
+                          type = lib.types.submodule {
+                            options = {
+                              dev = lib.mkEnableOption;
+                              dir = lib.mkEnableOption;
+                              file = lib.mkEnableOption;
+                              resolv = lib.mkEnableOption;
+                            };
+                          };
+                        };
+                      };
+                    };
+                  };
+                };                
+              };
+            };
+          };
+        };
       };
 
       config = {
@@ -612,6 +705,58 @@ let
     };
   };
 
+  sandboxOpts =
+    svc: let
+      sb = svc.sandbox or { enable = false; };
+      m = sb.mode or {};
+      fs = m.fileSystem or {}; 
+      userFlags = if m.flags or null == null then [ ] else m.flags;
+      provider = sb.provider;
+
+      mapBwrap = {
+      "proccess.asPID1" = "--as-pid-1";
+      "proccess.newSession" = "--new-session";
+      "proccess.noUsernsRestrictions" = "--disable-userns-restrictions";
+
+      "fileSystem.RORoot" = "--read-only";
+      "fileSystem.privateTemp" = [ "--tmpfs" "/tmp" ];
+      "fileSystem.privateHome" = [ "--tmpfs" "/home" "--tmpfs" "/root" ];
+      "fileSystem.privateDev" = "--dev";
+      "fileSystem.protectKernelTunables" = [ "--proc" "/proc" ];
+
+      "fileSystem.tryBinds.dev" = "--dev-bind-try";
+      "fileSystem.tryBinds.dir" = "--dir-try";
+      "fileSystem.tryBinds.file" = "--ro-bind-try";
+      "fileSystem.tryBinds.resolv" = [ "--ro-bind-try" "/etc/resolv.conf" "/etc/resolv.conf" ];
+    };
+
+    mapLsm = {
+      "unshare.net" = "--drop-net";
+      "fileSystem.privateTemp" = "--private-tmp";
+      "fileSystem.privateHome" = "--private-home";
+      "fileSystem.privateDev" = "--private-dev";
+      "fileSystem.tryBinds.resolv" = "--ro /etc/resolv.conf";
+    };
+      
+      evalToggle = path: flags:
+        lib.optional (lib.attrByPath (lib.splitString "." path) false m) flags;
+
+      bwrapFlags = lib.flatten [
+        (lib.mapAttrsToList (name: value: lib.optional value "--unshare-${name}") (m.unshare or {}))
+        (lib.concatLists (lib.mapAttrsToList evalToggle mapBwrap))
+        
+        (lib.optional ((fs.usernsMode or null) == "supported") "--assert-userns-supported")
+        (lib.optional ((fs.usernsMode or null) == "disabled")  "--assert-userns-disabled")
+        (lib.optional (svc.env or null != null) [ "--env-file" "${svc.env}" ])
+      ];
+
+      lsmFlags = lib.flatten (lib.mapAttrsToList evalToggle mapLsm);
+
+      compiledFlags = if provider == "bwrap" then bwrapFlags else lsmFlags;
+      finalFlags = compiledFlags ++ userFlags;
+    in if !(sb.enable or false) then ""
+    else "${provider} ${lib.escapeShellArgs (finalFlags ++ [ "--" ])} ";
+
   logToStr = v: if v == true then "log" else "log:${v}";
   cgroupToStr =
     cgroup:
@@ -692,6 +837,7 @@ let
       ++ (lib.optional (svc.oncrash or null != null) "oncrash:${svc.oncrash}")
       ++ (lib.optional (svc.extraConfig or "" != "") svc.extraConfig)
       ++ (lib.optional (svc.command != null) svc.command)
+      ++ (lib.optional (svc.command != null) "${sandboxOpts svc}${svc.command}")
       ++
 
         # tty specific options
